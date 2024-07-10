@@ -19,7 +19,7 @@ from prismatic.models.materialize import VISION_BACKBONES
 from prismatic.util.cot_utils import CotTag, get_cot_tags_list
 
 sys.path.append("../..")  # hack so that the interpreter can find experiments.robot
-from experiments.robot.bridge.widowx_env import WidowXGym
+from experiments.bridge.widowx_env import WidowXGym
 
 # Initialize important constants and pretty-printing mode in NumPy.
 ACTION_DIM = 7
@@ -238,7 +238,8 @@ def get_vla_action(vla, obs, task_label, **kwargs):
     image = Image.fromarray(obs["full_image"])
     image = image.convert("RGB")
     assert image.size[0] == image.size[1]
-    action = vla.predict_action(image, task_label, unnorm_key="bridge_orig", do_sample=False, **kwargs)
+    unnorm_key = "bridge_orig" if "bridge_orig" in vla.norm_stats else "bridge_reasoning"
+    action = vla.predict_action(image, task_label, unnorm_key=unnorm_key, do_sample=False, **kwargs)
     return action
 
 
