@@ -28,6 +28,7 @@ import draccus
 import torch
 import torch.distributed as dist
 import tqdm
+import wandb
 from accelerate import PartialState
 from peft import LoraConfig, PeftModel, get_peft_model, prepare_model_for_kbit_training
 from torch.nn.parallel import DistributedDataParallel as DDP
@@ -36,7 +37,6 @@ from torch.utils.data import DataLoader
 from transformers import AutoModelForVision2Seq, AutoProcessor, BitsAndBytesConfig
 from transformers.modeling_outputs import CausalLMOutputWithPast
 
-import wandb
 from prismatic.models.backbones.llm.prompting import PurePromptBuilder, VicunaV15ChatPromptBuilder
 from prismatic.util.data_utils import PaddedCollatorForActionPrediction
 from prismatic.vla.action_tokenizer import ActionTokenizer
@@ -283,7 +283,12 @@ def finetune(cfg: FinetuneConfig) -> None:
             # Push Metrics to W&B (every 10 gradient steps)
             if distributed_state.is_main_process and gradient_step_idx % 10 == 0:
                 wandb.log(
-                    {"train_loss": smoothened_loss, "action_accuracy": smoothened_action_accuracy, "l1_loss": smoothened_l1_loss}, step=gradient_step_idx
+                    {
+                        "train_loss": smoothened_loss,
+                        "action_accuracy": smoothened_action_accuracy,
+                        "l1_loss": smoothened_l1_loss,
+                    },
+                    step=gradient_step_idx,
                 )
 
             # Optimizer Step

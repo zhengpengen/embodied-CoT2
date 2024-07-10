@@ -5,7 +5,7 @@
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.2.0-EE4C2C.svg?style=for-the-badge&logo=pytorch)](https://pytorch.org/get-started/locally/)
 [![Python](https://img.shields.io/badge/python-3.10-blue?style=for-the-badge)](https://www.python.org)
 [![License](https://img.shields.io/github/license/TRI-ML/prismatic-vlms?style=for-the-badge)](LICENSE)
- 
+
 [**Getting Started**](#getting-started) | [**Pretrained VLAs**](#pretrained-vlas) | [**Installation**](#installation) | [**Fine-Tuning OpenVLA via LoRA**](#fine-tuning-openvla-via-lora) | [**Fully Fine-Tuning OpenVLA**](#fully-fine-tuning-openvla) |
 [**Training VLAs from Scratch**](#training-vlas-from-scratch) | [**Project Website**](https://openvla.github.io/)
 
@@ -18,14 +18,14 @@
 
 <hr style="border: 2px solid gray;"></hr>
 
-A simple and scalable codebase for training and fine-tuning vision-language-action models (VLAs) for generalist robotic 
+A simple and scalable codebase for training and fine-tuning vision-language-action models (VLAs) for generalist robotic
 manipulation:
 
 - **Different Dataset Mixtures**: We natively support arbitrary datasets in RLDS format, including arbitrary mixtures of
   data from the [Open X-Embodiment Dataset](https://robotics-transformer-x.github.io/).
-- **Easy Scaling**: Powered by PyTorch FSDP and Flash-Attention, we can quickly and efficiently train models from 1B - 
+- **Easy Scaling**: Powered by PyTorch FSDP and Flash-Attention, we can quickly and efficiently train models from 1B -
   34B parameters, with easily adaptable model architectures.
-- **Native Fine-Tuning Support**: Built-in support (with examples) for various forms of fine-tuning (full, 
+- **Native Fine-Tuning Support**: Built-in support (with examples) for various forms of fine-tuning (full,
   partial, LoRA).
 
 Built on top of [Prismatic VLMs](https://github.com/TRI-ML/prismatic-vlms).
@@ -49,10 +49,10 @@ import torch
 # Load Processor & VLA
 processor = AutoProcessor.from_pretrained("openvla/openvla-7b", trust_remote_code=True)
 vla = AutoModelForVision2Seq.from_pretrained(
-    "openvla/openvla-7b", 
+    "openvla/openvla-7b",
     attn_implementation="flash_attention_2",  # [Optional] Requires `flash_attn`
-    torch_dtype=torch.bfloat16, 
-    low_cpu_mem_usage=True, 
+    torch_dtype=torch.bfloat16,
+    low_cpu_mem_usage=True,
     trust_remote_code=True
 ).to("cuda:0")
 
@@ -68,30 +68,30 @@ action = vla.predict_action(**inputs, unnorm_key="bridge_orig", do_sample=False)
 robot.act(action, ...)
 ```
 
-We also provide an [example script for fine-tuning OpenVLA models for new tasks and 
-embodiments](./vla-scripts/finetune.py); this script supports different fine-tuning modes -- including (quantized) 
-low-rank adaptation (LoRA) supported by [HuggingFace's PEFT library](https://huggingface.co/docs/peft/en/index). 
+We also provide an [example script for fine-tuning OpenVLA models for new tasks and
+embodiments](./vla-scripts/finetune.py); this script supports different fine-tuning modes -- including (quantized)
+low-rank adaptation (LoRA) supported by [HuggingFace's PEFT library](https://huggingface.co/docs/peft/en/index).
 
-For deployment, we provide a lightweight script for [serving OpenVLA models over a REST API](./vla-scripts/deploy.py), 
-providing an easy way to integrate OpenVLA models into existing robot control stacks, 
+For deployment, we provide a lightweight script for [serving OpenVLA models over a REST API](./vla-scripts/deploy.py),
+providing an easy way to integrate OpenVLA models into existing robot control stacks,
 removing any requirement for powerful on-device compute.
 
 ## Pretrained VLAs
 
 We release two OpenVLA models trained as part of our work, with checkpoints, configs, and model cards available [on our
 HuggingFace page](https://huggingface.co/openvla):
-- [`openvla-7b`](https://huggingface.co/openvla/openvla-7b): The flagship model from our paper, trained from 
-  the Prismatic `prism-dinosiglip-224px` VLM (based on a fused DINOv2 and SigLIP vision backbone, and Llama-2 LLM). 
-  Trained on a large mixture of datasets from Open X-Embodiment spanning 970K trajectories 
+- [`openvla-7b`](https://huggingface.co/openvla/openvla-7b): The flagship model from our paper, trained from
+  the Prismatic `prism-dinosiglip-224px` VLM (based on a fused DINOv2 and SigLIP vision backbone, and Llama-2 LLM).
+  Trained on a large mixture of datasets from Open X-Embodiment spanning 970K trajectories
   ([mixture details - see "Open-X Magic Soup++"](./prismatic/vla/datasets/rlds/oxe/mixtures.py)).
 - [`openvla-v01-7b`](https://huggingface.co/openvla/openvla-7b-v01): An early model used during development, trained from
   the Prismatic `siglip-224px` VLM (singular SigLIP vision backbone, and a Vicuña v1.5 LLM). Trained on the same mixture
-  of datasets as [Octo](https://github.com/octo-models/octo), but for significantly fewer GPU hours than our final model 
+  of datasets as [Octo](https://github.com/octo-models/octo), but for significantly fewer GPU hours than our final model
   ([mixture details - see "Open-X Magic Soup"](./prismatic/vla/datasets/rlds/oxe/mixtures.py)).
 
-**Explicit Notes on Model Licensing & Commercial Use**: While all code in this repository is released under an MIT 
+**Explicit Notes on Model Licensing & Commercial Use**: While all code in this repository is released under an MIT
 License, our pretrained models may inherit restrictions from the underlying base models we use. Specifically, both the
-above models are derived from Llama-2, and as such are subject to the 
+above models are derived from Llama-2, and as such are subject to the
 [Llama Community License](https://ai.meta.com/llama/license/).
 
 ---
@@ -102,15 +102,15 @@ above models are derived from Llama-2, and as such are subject to the
   just run inference with OpenVLA models (or perform lightweight fine-tuning), see instructions above!
 
 This repository was built using Python 3.10, but should be backwards compatible with any Python >= 3.8. We require
-PyTorch 2.2.* -- installation instructions [can be found here](https://pytorch.org/get-started/locally/). The latest 
+PyTorch 2.2.* -- installation instructions [can be found here](https://pytorch.org/get-started/locally/). The latest
 version of this repository was developed and thoroughly tested with:
   - PyTorch 2.2.0, torchvision 0.17.0, transformers 4.40.1, tokenizers 0.19.1, timm 0.9.10, and flash-attn 2.5.5
 
 **[5/21/24] Note**: Following reported regressions and breaking changes in later versions of `transformers`, `timm`, and
-`tokenizers` we explicitly pin the above versions of the dependencies. We are working on implementing thorough tests, 
+`tokenizers` we explicitly pin the above versions of the dependencies. We are working on implementing thorough tests,
 and plan on relaxing these constraints as soon as we can.
 
-Once PyTorch has been properly installed, you can install this package locally via an editable installation (or via 
+Once PyTorch has been properly installed, you can install this package locally via an editable installation (or via
 `pip install git+https://github.com/openvla/openvla`):
 
 ```bash
@@ -203,7 +203,7 @@ please visit the [VLA Troubleshooting](#vla-troubleshooting) section or search f
 In this section, we discuss <ins>fully fine-tuning</ins> OpenVLA (all 7.5 billion parameters) via native PyTorch Fully Sharded Data Parallel (FSDP)
 using the [Prismatic VLMs](https://github.com/TRI-ML/prismatic-vlms) training script. Full fine-tuning is more advanced/involved and is only recommended
 if you have sufficient compute (e.g., a full node of 8 A100 GPUs) and if LoRA fine-tuning is insufficient for your use case (e.g., if the fine-tuning distribution
-varies drastically from the pretraining distribution). Otherwise, we recommend that you try parameter-efficient fine-tuning via LoRA, which is described in the 
+varies drastically from the pretraining distribution). Otherwise, we recommend that you try parameter-efficient fine-tuning via LoRA, which is described in the
 [Fine-Tuning OpenVLA via LoRA](#fine-tuning-openvla-via-lora) section.
 
 For full fine-tuning, you will need to download [a different version of the OpenVLA model checkpoint](https://huggingface.co/openvla/openvla-7b-prismatic) that is compatible
@@ -366,24 +366,24 @@ vla = AutoModelForVision2Seq.from_pretrained(
 ## Training VLAs from Scratch
 
 We provide full instructions and configurations for training VLA models on (arbitrary subsets of) the
-[Open X-Embodiment (OXE) Dataset](https://robotics-transformer-x.github.io/). If you run in to any issues with 
+[Open X-Embodiment (OXE) Dataset](https://robotics-transformer-x.github.io/). If you run in to any issues with
 the following, see [VLA Troubleshooting](#vla-troubleshooting) below (or file a GitHub Issue).
 
 ### VLA Pretraining Datasets
 
-We download and preprocess individual datasets from Open X-Embodiment in [RLDS format](https://github.com/google-research/rlds) following 
-[this custom script](https://github.com/moojink/rlds_dataset_mod/blob/main/prepare_open_x.sh). See 
-[mixtures.py](./prismatic/vla/datasets/rlds/oxe/mixtures.py) for the full list of component datasets (and mixture 
-weights) we use to train `openvla-7b`. 
+We download and preprocess individual datasets from Open X-Embodiment in [RLDS format](https://github.com/google-research/rlds) following
+[this custom script](https://github.com/moojink/rlds_dataset_mod/blob/main/prepare_open_x.sh). See
+[mixtures.py](./prismatic/vla/datasets/rlds/oxe/mixtures.py) for the full list of component datasets (and mixture
+weights) we use to train `openvla-7b`.
 - **Important**: For the BridgeData V2 component, the version in OXE is out of date (as of 12/20/2023). Instead,
-  you should download the dataset from the [official website](https://rail.eecs.berkeley.edu/datasets/bridge_release/data/tfds/bridge_dataset/) and place it under the subdirectory `bridge_orig/`. 
+  you should download the dataset from the [official website](https://rail.eecs.berkeley.edu/datasets/bridge_release/data/tfds/bridge_dataset/) and place it under the subdirectory `bridge_orig/`.
   Replace any reference to `bridge` in the OXE code with `bridge_orig`.
 
 ### VLA Configuration & Training Script
 
-The entry point for VLA training is [`vla-scripts/train.py`](vla-scripts/train.py). We use 
-[`draccus`](https://pypi.org/project/draccus) to provide a modular, dataclass-based interface for specifying VLA 
-training configurations; existing VLA configurations are in [`prismatic/conf/vla.py`](prismatic/conf/vla.py). You can 
+The entry point for VLA training is [`vla-scripts/train.py`](vla-scripts/train.py). We use
+[`draccus`](https://pypi.org/project/draccus) to provide a modular, dataclass-based interface for specifying VLA
+training configurations; existing VLA configurations are in [`prismatic/conf/vla.py`](prismatic/conf/vla.py). You can
 add your own training configuration and refer to it using the `--vla.type` command line argument.
 
 We use PyTorch Fully Sharded Data Parallel (FSDP) to distribute training across GPUs. Launch training via `torchrun`:
@@ -439,5 +439,5 @@ If you find our code or models useful in your work, please cite [our paper](http
     author={{Moo Jin} Kim and Karl Pertsch and Siddharth Karamcheti and Ted Xiao and Ashwin Balakrishna and Suraj Nair and Rafael Rafailov and Ethan Foster and Grace Lam and Pannag Sanketi and Quan Vuong and Thomas Kollar and Benjamin Burchfiel and Russ Tedrake and Dorsa Sadigh and Sergey Levine and Percy Liang and Chelsea Finn},
     journal = {arXiv preprint arXiv:2406.09246},
     year={2024}
-} 
+}
 ```
