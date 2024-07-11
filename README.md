@@ -17,7 +17,29 @@ documentation of the code and dependencies.
 
 ![](media/ecot_teaser.jpg)
 
-## Getting Started
+## Quickstart
+
+We provide a [Colab notebook](https://colab.research.google.com/drive/1CzRKin3T9dl-4HYBVtuULrIskpVNHoAH?usp=sharing) containing code for loading up our ECoT policy and using it to generate reasoning and actions in response to an observation. Loading the model for inference is easy:
+```python
+from transformers import AutoModelForVision2Seq, AutoProcessor
+
+device = "cuda"
+path_to_hf = "Embodied-CoT/ecot-openvla-7b-bridge"
+processor = AutoProcessor.from_pretrained(path_to_hf, trust_remote_code=True)
+vla = AutoModelForVision2Seq.from_pretrained(path_to_hf, torch_dtype=torch.bfloat16).to(device)
+
+observation = <ROBOT IMAGE OBSERVATION HERE>
+instruction = <YOUR INSTRUCTION HERE>
+prompt = "A chat between a curious user and an artificial intelligence assistant. " + \
+    "The assistant gives helpful, detailed, and polite answers to the user's questions. " + \
+    f"USER: What action should the robot take to {instruction.lower()}? ASSISTANT: TASK:"
+
+inputs = processor(prompt, image).to(device, dtype=torch.bfloat16)
+action, generated_ids = vla.predict_action(**inputs, unnorm_key="bridge_orig", max_new_tokens=1024)
+generated_text = processor.batch_decode(generated_ids)[0]
+```
+
+## Training and Evaluation
 
 To train the models, from scratch use the following command:
 
