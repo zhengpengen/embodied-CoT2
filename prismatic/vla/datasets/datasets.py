@@ -5,6 +5,7 @@ Lightweight PyTorch Dataset Definition for wrapping RLDS TFDS Pipeline; just def
 format to OpenVLA, IterableDataset shim.
 """
 
+import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Tuple, Type
@@ -17,6 +18,7 @@ from transformers import PreTrainedTokenizerBase
 
 from prismatic.models.backbones.llm.prompting import PromptBuilder
 from prismatic.models.backbones.vision import ImageTransform
+from prismatic.util.cot_utils import CotTag, abbreviate_tag
 from prismatic.util.data_utils import tree_map
 from prismatic.vla.action_tokenizer import ActionTokenizer
 from prismatic.vla.datasets.rlds import make_interleaved_dataset, make_single_dataset
@@ -27,6 +29,33 @@ from prismatic.vla.datasets.rlds.utils.data_utils import NormalizationType
 IGNORE_INDEX = -100
 
 
+def reasoning_dropout(reasoning: str, dropout_prob: float) -> Tuple[str, str]:
+    """Dropout reasoning tokens with probability `dropout_prob`."""
+    if len(reasoning) == 0:
+        return reasoning, ""
+
+    reasoning_parts = reasoning.split("@")
+    tags = [(reasoning_parts[i], reasoning_parts[i + 1]) for i in range(0, len(reasoning_parts), 2)]
+
+    subset = np.random.rand(len(tags)) > dropout_prob
+
+    subset_string = (
+        "[" + ", ".join([abbreviate_tag(tag) for (tag, _), is_taken in zip(tags, subset) if is_taken]) + "]"
+    )  # abbreviation
+
+    excluded_tags = []
+
+    if "EXCLUDE_TAGS" in os.environ:
+        excluded_tags = os.environ["EXCLUDE_TAGS"].split(",")
+
+    return (
+        " ".join(
+            [f"{tag[0]} {tag[1]}" for tag, is_taken in zip(tags, subset) if (is_taken and tag[0] not in excluded_tags)]
+        ),
+        subset_string,
+    )
+
+
 @dataclass
 class RLDSBatchTransform:
     action_tokenizer: ActionTokenizer
@@ -34,21 +63,35 @@ class RLDSBatchTransform:
     image_transform: ImageTransform
     prompt_builder_fn: Type[PromptBuilder]
     predict_stop_token: bool = True
+    print_prompt_limit: int = 20
+    reasoning_dropout_prob: float = 0.0
 
     def __call__(self, rlds_batch: Dict[str, Any]) -> Dict[str, Any]:
         """Converts a RLDS batch to the format expected by the OpenVLA collator/models."""
         dataset_name, action = rlds_batch["dataset_name"], rlds_batch["action"][0]
         img = Image.fromarray(rlds_batch["observation"]["image_primary"][0])
         lang = rlds_batch["task"]["language_instruction"].decode().lower()
+        reasoning, subset = reasoning_dropout(rlds_batch["reasoning"].decode(), dropout_prob=self.reasoning_dropout_prob)
 
         # Construct Chat-based Prompt =>> Input is default query + language instruction, output are the action tokens
         prompt_builder = self.prompt_builder_fn("openvla")
+
+        img = Image.fromarray(rlds_batch["observation"]["image_primary"][0])
         conversation = [
+            # {"from": "human", "value": f"What action should the robot take to {lang}? Explain why with {subset}."},
             {"from": "human", "value": f"What action should the robot take to {lang}?"},
-            {"from": "gpt", "value": self.action_tokenizer(action)},
+            {"from": "gpt", "value": f"{reasoning} {CotTag.ACTION.value} {self.action_tokenizer(action)}"},
         ]
+
         for turn in conversation:
             prompt_builder.add_turn(turn["from"], turn["value"])
+
+        if self.print_prompt_limit > 0:
+            print("Conversation:", conversation)
+            p = prompt_builder.get_prompt()
+            print("Prompt:", p)
+
+            self.print_prompt_limit -= 1
 
         # Tokenize (w/ `base_tokenizer`)
         input_ids = self.base_tokenizer(prompt_builder.get_prompt(), add_special_tokens=True).input_ids
@@ -59,8 +102,6 @@ class RLDSBatchTransform:
         input_ids, labels = torch.tensor(input_ids), torch.tensor(labels)
         pixel_values = self.image_transform(img)
 
-        # [CRITICAL] We do not want to take the loss for anything but the predicted action tokens!
-        labels[: -(len(action) + 1)] = IGNORE_INDEX
         if not self.predict_stop_token:
             labels[-1] = IGNORE_INDEX
 
