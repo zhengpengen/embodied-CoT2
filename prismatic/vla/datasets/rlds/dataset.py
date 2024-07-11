@@ -7,6 +7,8 @@ Core interface script for configuring and initializing RLDS datasets.
 import copy
 import inspect
 import json
+import os
+import shutil
 from functools import partial
 from typing import Callable, Dict, List, Optional, Tuple, Union
 
@@ -14,6 +16,7 @@ import dlimp as dl
 import numpy as np
 import tensorflow as tf
 import tensorflow_datasets as tfds
+from huggingface_hub import hf_hub_download
 
 from prismatic.overwatch import initialize_overwatch
 from prismatic.util.cot_utils import get_cot_database_keys, get_cot_tags_list
@@ -54,8 +57,7 @@ def make_dataset_from_rlds(
     action_normalization_mask: Optional[List[bool]] = None,
     num_parallel_reads: int = tf.data.AUTOTUNE,
     num_parallel_calls: int = tf.data.AUTOTUNE,
-    # reasoning_dataset_path: str = "/raid/datasets/openx/bridge_orig/bridge_labeled_dataset_3.json",
-    reasoning_dataset_path: str = "/home/michal/tmp/bridge_labeled_dataset_3.json",
+    reasoning_dataset_path: str = "~/.cache/reasonings_dataset.json",
 ) -> Tuple[dl.DLataset, dict]:
     """
     This function is responsible for loading a specific RLDS dataset from storage and getting it into a standardized
@@ -130,6 +132,19 @@ def make_dataset_from_rlds(
     REQUIRED_KEYS = {"observation", "action"}
     if language_key is not None:
         REQUIRED_KEYS.add(language_key)
+
+    if os.path.isfile(reasoning_dataset_path):
+        print(f"Loading from local checkpoint path `{reasoning_dataset_path}`.")
+    else:
+        print(f"Dataset file `{reasoning_dataset_path}` not found, loading from HF.")
+
+        download_path = hf_hub_download(
+            repo_id="Embodied-CoT/embodied_features_bridge",
+            filename="embodied_features_bridge.json",
+            repo_type="dataset",
+        )
+
+        shutil.copyfile(download_path, reasoning_dataset_path)
 
     with open(reasoning_dataset_path, "r") as f:
         reasoning_dataset = json.load(f)
