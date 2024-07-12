@@ -1,10 +1,10 @@
 # Robotic Control via Embodied Chain-of-Thought Reasoning
 
-[![arXiv](https://img.shields.io/badge/arXiv-2406.09246-df2a2a.svg?style=for-the-badge)](https://embodied-cot.github.io/static/paper.pdf)
+[![arXiv](https://img.shields.io/badge/arXiv-2406.09246-df2a2a.svg)](https://embodied-cot.github.io/static/paper.pdf)
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg?style=for-the-badge)](https://colab.research.google.com/drive/1CzRKin3T9dl-4HYBVtuULrIskpVNHoAH?usp=sharing)
-[![HF Models](https://img.shields.io/badge/%F0%9F%A4%97-Models-yellow?style=for-the-badge)](https://huggingface.co/Embodied-CoT)
-[![Python](https://img.shields.io/badge/python-3.10-blue?style=for-the-badge)](https://www.python.org)
-[![License](https://img.shields.io/github/license/TRI-ML/prismatic-vlms?style=for-the-badge)](LICENSE)
+[![HF Models](https://img.shields.io/badge/%F0%9F%A4%97-Models-yellow)](https://huggingface.co/Embodied-CoT)
+[![Python](https://img.shields.io/badge/python-3.10-blue)](https://www.python.org)
+[![License](https://img.shields.io/github/license/TRI-ML/prismatic-vlms)](LICENSE)
 
 [Michał Zawalski](https://michalzawalski.github.io/), [William Chen](https://verityw.github.io/), [Karl Pertsch](https://kpertsch.github.io/), [Oier Mees](https://www.oiermees.com/),  [Chelsea Finn](https://ai.stanford.edu/~cbfinn/), [Sergey Levine](https://people.eecs.berkeley.edu/~svlevine/)
 <hr style="border: 2px solid gray;"></hr>
