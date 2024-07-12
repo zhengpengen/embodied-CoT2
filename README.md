@@ -5,6 +5,7 @@
 [![HF Models](https://img.shields.io/badge/%F0%9F%A4%97-Models-yellow)](https://huggingface.co/Embodied-CoT)
 [![Python](https://img.shields.io/badge/python-3.10-blue)](https://www.python.org)
 [![License](https://img.shields.io/github/license/TRI-ML/prismatic-vlms)](LICENSE)
+[![Static Badge](https://img.shields.io/badge/Project-Page-a)](https://embodied-cot.github.io/)
 
 [Michał Zawalski](https://michalzawalski.github.io/), [William Chen](https://verityw.github.io/), [Karl Pertsch](https://kpertsch.github.io/), [Oier Mees](https://www.oiermees.com/),  [Chelsea Finn](https://ai.stanford.edu/~cbfinn/), [Sergey Levine](https://people.eecs.berkeley.edu/~svlevine/)
 <hr style="border: 2px solid gray;"></hr>
