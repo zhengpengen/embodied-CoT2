@@ -1,6 +1,6 @@
 # Robotic Control via Embodied Chain-of-Thought Reasoning
 
-[![arXiv](https://img.shields.io/badge/arXiv-2406.09246-df2a2a.svg)](https://embodied-cot.github.io/static/paper.pdf)
+[![arXiv](https://img.shields.io/badge/arXiv-2407.08693-df2a2a.svg)](https://arxiv.org/pdf/2407.08693)
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg?style=for-the-badge)](https://colab.research.google.com/drive/1CzRKin3T9dl-4HYBVtuULrIskpVNHoAH?usp=sharing)
 [![HF Models](https://img.shields.io/badge/%F0%9F%A4%97-Models-yellow)](https://huggingface.co/Embodied-CoT)
 [![Python](https://img.shields.io/badge/python-3.10-blue)](https://www.python.org)
@@ -109,7 +109,8 @@ If you find our code or models useful in your work, please cite [our paper](http
 ```bibtex
 @article{Zawalski24-ecot,
     title={Robotic Control via Embodied Chain-of-Thought Reasoning},
-    author={Zawalski, Michał and Chen, William and Pertsch, Karl and Mees, Oier and Finn, Chelsea and Levine, Sergey},
+    author={Michał Zawalski and William Chen and Karl Pertsch and Oier Mees and Chelsea Finn and Sergey Levine},
+    journal={arXiv preprint arXiv:2407.08693},
     year={2024}
 }
 ```
