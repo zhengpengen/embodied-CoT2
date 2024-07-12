@@ -38,6 +38,7 @@ inputs = processor(prompt, image).to(device, dtype=torch.bfloat16)
 action, generated_ids = vla.predict_action(**inputs, unnorm_key="bridge_orig", max_new_tokens=1024)
 generated_text = processor.batch_decode(generated_ids)[0]
 ```
+The standard model in `torch.bfloat16` requires 16 GB of GPU memory, but using [bitsandbytes](https://huggingface.co/docs/bitsandbytes/main/en/index) and 4-bit quantization lowers memory usage to around 5 GB. See the Colab for more details.
 
 ## Training and Evaluation
 
