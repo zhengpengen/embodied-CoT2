@@ -65,6 +65,8 @@ python3 experiments/bridge/eval_model_in_bridge_env.py
   --port <robot interface port>
 ```
 
+Additionally, we provide instructions for [converting, compiling, and evaluating our ECoT VLA with TensorRT-LLM](https://github.com/rail-berkeley/tensorrt-openvla), drastically improving its inference speeds while maintaining performance.
+
 ## Pretrained models
 
 We release two ECoT models trained as part of our work, and the dataset of reasonings, available [on our
