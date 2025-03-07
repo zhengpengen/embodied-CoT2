@@ -2,6 +2,8 @@ import json
 import os
 import re
 import time
+import tensorflow as tf
+import tensorflow_datasets as tfds
 
 import google.generativeai as genai
 from google.api_core.exceptions import ResourceExhausted
@@ -253,3 +255,13 @@ def generate_reasonings(builder, episode_ids, save_path="reasonings.json"):
 
     with open(save_path, "w") as out_f:
         json.dump(reasonings, out_f)
+
+
+if __name__ == "__main__":
+    builder = tfds.builder_from_directory(builder_dir='<TODO: Enter path to BridgeV2>')
+    episode_ids = range(53192)  # All training episodes
+
+    # NOTE the generator expects the captions.json file to be present in the working directory
+    # The captions should be generated using the script in
+    # scripts/generate_embodied_data/bounding_boxes/generate_descriptions.py
+    generate_reasonings(builder, episode_ids)
