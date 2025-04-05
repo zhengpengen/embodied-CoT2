@@ -68,7 +68,7 @@ python3 experiments/bridge/eval_model_in_bridge_env.py
 Additionally, we provide instructions for [converting, compiling, and evaluating our ECoT VLA with TensorRT-LLM](https://github.com/rail-berkeley/tensorrt-openvla), drastically improving its inference speeds while maintaining performance.
 
 ## Dataset of embodied features
-The dataset of the embodied features and reasonings is available for download [here](https://huggingface.co/Embodied-CoT/embodied_features_bridge). During training, it is expected to be found under the `~/.cache/reasonings_dataset.json` path, which is the default location after downloading from Hugging Face. If you want to link the dataset from a different path, update the path [in this line](https://github.com/MichalZawalski/embodied-CoT/blob/6fc10881e1f686947518b2e9aa2f6e8e2b6cccfa/prismatic/vla/datasets/rlds/dataset.py#L60).
+The dataset of the embodied features and reasonings is available for download [here](https://huggingface.co/datasets/Embodied-CoT/embodied_features_bridge). During training, it is expected to be found under the `~/.cache/reasonings_dataset.json` path, which is the default location after downloading from Hugging Face. If you want to link the dataset from a different path, update the path [in this line](https://github.com/MichalZawalski/embodied-CoT/blob/6fc10881e1f686947518b2e9aa2f6e8e2b6cccfa/prismatic/vla/datasets/rlds/dataset.py#L60).
 
 ## Pretrained models
 
