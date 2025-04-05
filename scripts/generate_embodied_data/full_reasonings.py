@@ -9,6 +9,7 @@ import google.generativeai as genai
 from google.api_core.exceptions import ResourceExhausted
 
 from scripts.generate_embodied_data.primitive_movements import get_move_primitives_episode
+from scripts.generate_embodied_data.gripper_positions import get_corrected_positions
 
 
 class Gemini:
@@ -213,6 +214,8 @@ def build_single_reasoning(episode_id, builder, lm, captions):
 
     move_primitives = get_move_primitives_episode(episode)
     ft["move_primitive"] = [move[0] for move in move_primitives]
+
+    ft["gripper_positions"] = get_corrected_positions(episode_id, builder, plot=False)
 
     mt = {
         "episode_id": str(int(episode["episode_metadata"]["episode_id"].numpy())),
