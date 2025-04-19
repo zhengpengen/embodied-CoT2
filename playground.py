@@ -114,7 +114,7 @@ def draw_bboxes(img, bboxes, img_size=(640, 480)):
             cv2.LINE_AA,
         )
 
-device = "cuda:3"
+device = "cuda:7"
 
 # Load Processor & VLA
 path_to_converted_ckpt = "Embodied-CoT/ecot-openvla-7b-bridge"
@@ -148,16 +148,34 @@ def get_libero_env(task_bddl_file, resolution=256):
     return env
 
 #LIBERO
-task_bddl_file = '/home/michael/ecot2/LIBERO/libero/libero/bddl_files/libero_spatial/pick_up_the_black_bowl_next_to_the_ramekin_and_place_it_on_the_plate.bddl'
+task_bddl_file = '/home/michael/LIBERO/libero/libero/bddl_files/libero_goal/open_the_middle_drawer_of_the_cabinet.bddl'
 env = get_libero_env(task_bddl_file)
 env.reset()
 print(f'env: {env}')
-obs = env.step([0,0,0,0,0,0,0])
+obs,_,_,_ = env.step([0,0,0,0,0,0,0])
+
+print(type(obs))
+print(obs)
 
 # image stuff
 # image = Image.open("./test_obs.png")
-image = obs
+obs = obs['agentview_image']
+obs = obs[::-1,::-1]
+print(obs.shape)
+image = Image.fromarray(obs)
+print(type(image))
+# print(image.shape)
+print(image)
+image.save('output.jpg')
 print(prompt.replace(". ", ".\n"))
+
+for i in range(100):
+    obs,_,_,_ = env.step([1,1,1,0,0,0,0])
+    if i % 10 == 0:
+        image = Image.fromarray(obs['agentview_image'][::-1,::-1])
+        # print(type(image))
+        # print(image)
+        image.save(f'output{i}.jpg')
 
 # === BFLOAT16 MODE ===
 inputs = processor(prompt, image).to(device, dtype=torch.bfloat16)
@@ -194,7 +212,7 @@ for t in text:
 
     caption += caption_new.lstrip() + "\n\n"
 
-base = Image.fromarray(np.ones((480, 640, 3), dtype=np.uint8) * 255)
+base = Image.fromarray(np.ones((256, 256, 3), dtype=np.uint8) * 255)
 draw = ImageDraw.Draw(base)
 font = ImageFont.load_default(size=14) # big text
 color = (0,0,0) # RGB
@@ -207,3 +225,4 @@ draw_bboxes(img_arr, bboxes)
 text_arr = np.array(base)
 
 reasoning_img = Image.fromarray(np.concatenate([img_arr, text_arr], axis=1))   
+reasoning_img.save("reasoning.jpg")
