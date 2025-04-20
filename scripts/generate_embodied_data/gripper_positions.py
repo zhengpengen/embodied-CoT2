@@ -13,7 +13,7 @@ sam_model = SamModel.from_pretrained("facebook/sam-vit-base")
 sam_processor = SamProcessor.from_pretrained("facebook/sam-vit-base")
 
 image_dims = (256, 256)
-image_label = "image_0"
+image_label = "image"
 
 
 def get_bounding_boxes(img, prompt="the black robotic gripper"):
@@ -123,6 +123,7 @@ def get_gripper_pos(episode_id, frame, builder, plot=True):
 
 
 def get_gripper_pos_raw(img):
+    # print(f'gripper called')
     img = Image.fromarray(img.numpy())
     predictions = get_bounding_boxes(img)
 
@@ -138,10 +139,15 @@ def get_gripper_pos_raw(img):
 
 
 def process_trajectory(episode):
+    print(f'[NOTE] entered traj')
+
     images = [step["observation"][image_label] for step in episode["steps"]]
+    print(f'[NOTE] finished traj images')
     states = [step["observation"]["state"] for step in episode["steps"]]
+    print(f'[NOTE] finished traj states')
 
     raw_trajectory = [(*get_gripper_pos_raw(img), state) for img, state in zip(images, states)]
+    print(f'[NOTE] finished traj raw traj')
 
     prev_found = list(range(len(raw_trajectory)))
     next_found = list(range(len(raw_trajectory)))
@@ -149,11 +155,17 @@ def process_trajectory(episode):
     prev_found[0] = -1e6
     next_found[-1] = 1e6
 
+    print(f'[NOTE] start traj LOOP 1')
+
     for i in range(1, len(raw_trajectory)):
+        # print(i)
         if raw_trajectory[i][2] is None:
             prev_found[i] = prev_found[i - 1]
+        
+    print(f'[NOTE] start traj LOOP 2')
 
     for i in reversed(range(0, len(raw_trajectory) - 1)):
+        # print(i)
         if raw_trajectory[i][2] is None:
             next_found[i] = next_found[i + 1]
 
@@ -162,7 +174,10 @@ def process_trajectory(episode):
         return None
 
     # Replace the not found positions with the closest neighbor
+
+    print(f'[NOTE] start traj LOOP 3')
     for i in range(0, len(raw_trajectory)):
+        # print(i)
         raw_trajectory[i] = raw_trajectory[prev_found[i] if i - prev_found[i] < next_found[i] - i else next_found[i]]
 
     return raw_trajectory
@@ -170,8 +185,11 @@ def process_trajectory(episode):
 
 def get_corrected_positions(episode_id, builder, plot=False):
     ds = builder.as_dataset(split=f"train[{episode_id}:{episode_id + 1}]")
+    print(f'[NOTE] finished positions ds build')
     episode = next(iter(ds))
+    print(f'[NOTE] start traj')
     t = process_trajectory(episode)
+    print(f'[NOTE] finished traj')
 
     images = [step["observation"][image_label] for step in episode["steps"]]
     images = [img.numpy() for img in images]
@@ -183,11 +201,14 @@ def get_corrected_positions(episode_id, builder, plot=False):
 
     from sklearn.linear_model import RANSACRegressor
 
+    print(f'[NOTE] starting RANSAC')
     points_3d_pr = np.concatenate([points_3d, np.ones_like(points_3d[:, :1])], axis=-1)
     points_2d_pr = np.concatenate([points_2d, np.ones_like(points_2d[:, :1])], axis=-1)
     reg = RANSACRegressor(random_state=0).fit(points_3d_pr, points_2d_pr)
 
     pr_pos = reg.predict(points_3d_pr)[:, :-1].astype(int)
+
+    print(f'[NOTE] finished RANSAC')
 
     if plot:
         images = [
