@@ -26,7 +26,7 @@ parser.add_argument("--results-path", default="/data2/michael")
 args = parser.parse_args()
 
 device = f"cuda:0"
-hf_token = "<TODO: CHANGE TO OWN HF TOKEN>"
+hf_token = "TODO ADD UR  OWN"
 vlm_model_id = "prism-dinosiglip+7b"
 # vlm_model_id = "prism-dinosiglip+13b"
 
@@ -55,13 +55,16 @@ ds = tfds.load(
     split=f"train[{start}%:{end}%]",
 )
 
-for example in ds.take(1):
-    print(example)
+# for example in ds.take(1):
+#     print(example)
 
-import tensorflow as tf
+# import tensorflow as tf
 
-for episode in ds.take(1):
-    tf.print("Episode structure:", episode)
+# for episode in ds.take(1):
+#     tf.print("Episode structure:", episode)
+
+for i, episode in enumerate(tqdm(ds)):
+    print(f'{i}: {episode}')
 
 # Load Prismatic VLM
 print(f"Loading Prismatic VLM ({vlm_model_id})...")
@@ -83,11 +86,13 @@ def create_user_prompt(lang_instruction):
 
 print("entering episode creation")
 
+
+
 results_json = {}
 for i, episode in enumerate(tqdm(ds)):
     # There is no 'episode_id' in the metadata, so generate one manually
     episode_id = i
-    # episode_id = episode["episode_metadata"]["episode_id"].numpy()w
+    # episode_id = episode["episode_metadata"]["episode_id"].numpy()
     file_path = episode["episode_metadata"]["file_path"].numpy().decode()
     for step in episode["steps"]:
         lang_instruction = step["language_instruction"].numpy().decode()

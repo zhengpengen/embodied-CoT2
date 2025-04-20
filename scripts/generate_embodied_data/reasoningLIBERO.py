@@ -16,7 +16,7 @@ from tqdm import tqdm
 
 class Gemini:
     def __init__(self):
-        api_key = "TODO: CHANGE TO OWN GEMINI KEY"
+        api_key = "TODO ADD UR OWN"
         genai.configure(api_key=api_key)
 
         # self.model = genai.GenerativeModel("gemini-1.5-flash")
@@ -207,12 +207,13 @@ def get_reasoning_dict(features, metadata, lm):
     return extract_reasoning_dict(reasoning_output)
 
 
-def build_single_reasoning(episode_id, builder, lm, captions):
-    ds = builder.as_dataset(split=f"train[{episode_id}:{episode_id + 1}]")
-    for example in ds.take(1):
-        print(example)
-    print(f'[NOTE] finished building ds for ep {episode_id}')
-    episode = next(iter(ds))
+def build_single_reasoning(episode_id, episode, lm, captions):
+    # ds = builder.as_dataset(split=f"train[{0}:{episode_id + 1}]")
+    # ds = builder.as_dataset(split=f"train[0%:25%]")
+    # for i, episode in enumerate(tqdm(ds)):
+    #     print(f'{i}: {episode}')
+    # print(f'[NOTE] finished building ds for ep {episode_id}')
+    # episode = next(iter(ds))
 
     ft = dict()
 
@@ -234,6 +235,10 @@ def build_single_reasoning(episode_id, builder, lm, captions):
         "n_steps": len(episode["steps"]),
         "language_instruction": str(next(iter(episode["steps"]))["language_instruction"].numpy().decode()),
     }
+
+    print(captions)
+    print(episode)
+    print(mt)
 
     mt["caption"] = captions[mt["file_path"]][str(episode_id)]["caption"]
 
@@ -260,9 +265,12 @@ def generate_reasonings(builder, episode_ids, save_path="/data2/michael/libero_c
     with open("/home/michael/ecot2/embodied-CoT2/scripts/generate_embodied_data/captions.json", "r") as captions_file:
         captions_dict = json.load(captions_file)
 
-    for i in episode_ids:
-        print(f'[GENERATING] episode {i}')
-        entry = build_single_reasoning(i, builder, lm, captions_dict)
+    ds = builder.as_dataset(split=f"train[0%:25%]")
+
+    for episode_id, episode in enumerate(tqdm(ds)):
+        print(f'[GENERATING] episode {episode_id}')
+        # i=16
+        entry = build_single_reasoning(episode_id, episode, lm, captions_dict)
 
         if entry["metadata"]["file_path"] in reasonings.keys():
             reasonings[entry["metadata"]["file_path"]][entry["metadata"]["episode_id"]] = entry
@@ -270,6 +278,9 @@ def generate_reasonings(builder, episode_ids, save_path="/data2/michael/libero_c
             reasonings[entry["metadata"]["file_path"]] = {entry["metadata"]["episode_id"]: entry}
 
         print("computed reasoning:", entry)
+
+        with open(f'/data2/michael/libero_cot/reasonings_{i}.json', "w") as out_f:
+            json.dump(reasonings, out_f)
 
 
     with open(save_path, "w") as out_f:
@@ -286,3 +297,19 @@ if __name__ == "__main__":
     # The captions should be generated using the script in
     # scripts/generate_embodied_data/bounding_boxes/generate_descriptions.py
     generate_reasonings(builder, episode_ids)
+
+# if __name__ == "__main__":
+#     print('[NOTE] program starting')
+    
+#     builder = tfds.builder_from_directory(
+#         builder_dir='/data2/michael/modified_libero_rlds/libero_goal_no_noops/1.0.0'
+#     )
+#     print('[NOTE] finished building')
+
+#     print(f'splits: {builder.info.splits}')
+
+#     # Load the dataset (all splits or just train, depending on your setup)
+#     dataset = builder.as_dataset(split='train[0%:25%]', as_supervised=False)
+
+#     for i, episode in enumerate(tqdm(dataset)):
+#         print(f'{i}: {episode}')
