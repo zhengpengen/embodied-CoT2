@@ -171,17 +171,7 @@ break_line}trajectory specified by `trajectory_features`.
 - At the very end of the response, write a single label FINISHED to indicate that the answer is complete."""
 
 
-def find_task_occurrences(input_string, tags):
-    parts = [r"\s*(\d+):\s*\"?\s*"]          #  id : "   ← all optional whitespace / quote
-    for tag in tags:
-        parts.append(
-            rf"\s*<{re.escape(tag)}\s*>"     # allow whitespace before the >
-            r"([\s\S]*?)"                   # non‑greedy, DOTALL‑safe capture
-            rf"</{re.escape(tag)}>\s*"      # closing tag
-        )
-
-    PATTERN = re.compile("".join(parts), flags=re.DOTALL)
-    return PATTERN.findall(input_string)
+# def find_task_occurrences(input_string, tags):
 #     pattern = r"(\d+):"
 #     for tag in tags:
 #         pattern = pattern + r"\s*<" + tag + r">([^<]*)</" + tag + ">"
@@ -189,6 +179,10 @@ def find_task_occurrences(input_string, tags):
 #     matches = re.findall(pattern, input_string)
 #     return matches
 
+def find_task_occurrences(input_string, tags):
+    tag_pattern = ''.join(fr'\s*<\s*{tag}\s*>(.*?)<\s*/\s*{tag}\s*>' for tag in tags)
+    pattern = fr'(\d+):\s*"{tag_pattern}",?'
+    return re.findall(pattern, input_string)
 
 def extract_reasoning_dict(reasoning_output, tags=("task", "plan", "subtask", "subtask_reason", "move", "move_reason")):
     if reasoning_output is None:
@@ -276,7 +270,7 @@ class NumpyEncoder(json.JSONEncoder):
 
 
 
-def generate_reasonings(builder, episode_ids, save_path="/data2/michael/libero_cot/reasonings.json"):
+def generate_reasonings(builder, episode_ids, save_path="/mnt/data1/michael/libero_cot/reasonings.json"):
     print("[NOTE] starting reasoning generation")
     reasonings = dict()
     lm = Gemini()
@@ -288,7 +282,7 @@ def generate_reasonings(builder, episode_ids, save_path="/data2/michael/libero_c
 
         print("loaded reasonings:", sum([len(v) for v in reasonings.values()]), "entries")
 
-    with open("/home/michael/ecot2/embodied-CoT2/scripts/generate_embodied_data/captions.json", "r") as captions_file:
+    with open("/home/michael/embodied-CoT2/scripts/generate_embodied_data/captions.json", "r") as captions_file:
         captions_dict = json.load(captions_file)
 
     ds = builder.as_dataset(split=f"train[0%:25%]")
@@ -307,7 +301,7 @@ def generate_reasonings(builder, episode_ids, save_path="/data2/michael/libero_c
 
         print("computed reasoning:", entry)
 
-        with open(f'/data2/michael/libero_cot/reasonings_{episode_id}.json', "w") as out_f:
+        with open(f'/mnt/data1/michael/libero_cot/reasonings_{episode_id}.json', "w") as out_f:
             json.dump(reasonings, out_f, cls=NumpyEncoder)
 
 
@@ -317,7 +311,7 @@ def generate_reasonings(builder, episode_ids, save_path="/data2/michael/libero_c
 
 if __name__ == "__main__":
     print('[NOTE] program starting')
-    builder = tfds.builder_from_directory(builder_dir='/data2/michael/modified_libero_rlds/libero_goal_no_noops/1.0.0')
+    builder = tfds.builder_from_directory(builder_dir='/mnt/data1/michael/modified_libero_rlds/libero_goal_no_noops/1.0.0')
     print('[NOTE] finished building')
     episode_ids = range(107)  # All training episodes
 
