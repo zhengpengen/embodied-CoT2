@@ -123,7 +123,7 @@ def get_gripper_pos(episode_id, frame, builder, plot=True):
 
 
 def get_gripper_pos_raw(img):
-    # print(f'gripper called')
+    print(f'gripper called')
     img = Image.fromarray(img.numpy())
     predictions = get_bounding_boxes(img)
 

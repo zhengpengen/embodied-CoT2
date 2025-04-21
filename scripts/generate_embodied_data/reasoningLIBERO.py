@@ -3,7 +3,8 @@ import os
 import re
 import time
 import tensorflow as tf
-import tensorflow_datasets as tfds\
+import tensorflow_datasets as tfds
+import numpy as np
 
 
 import google.generativeai as genai
@@ -16,7 +17,7 @@ from tqdm import tqdm
 
 class Gemini:
     def __init__(self):
-        api_key = "TODO ADD UR OWN"
+        api_key = "add ur own"
         genai.configure(api_key=api_key)
 
         # self.model = genai.GenerativeModel("gemini-1.5-flash")
@@ -171,21 +172,34 @@ break_line}trajectory specified by `trajectory_features`.
 
 
 def find_task_occurrences(input_string, tags):
-    pattern = r"(\d+):"
+    parts = [r"\s*(\d+):\s*\"?\s*"]          #  id : "   ← all optional whitespace / quote
     for tag in tags:
-        pattern = pattern + r"\s*<" + tag + r">([^<]*)<\/" + tag + ">"
+        parts.append(
+            rf"\s*<{re.escape(tag)}\s*>"     # allow whitespace before the >
+            r"([\s\S]*?)"                   # non‑greedy, DOTALL‑safe capture
+            rf"</{re.escape(tag)}>\s*"      # closing tag
+        )
 
-    matches = re.findall(pattern, input_string)
-    return matches
+    PATTERN = re.compile("".join(parts), flags=re.DOTALL)
+    return PATTERN.findall(input_string)
+#     pattern = r"(\d+):"
+#     for tag in tags:
+#         pattern = pattern + r"\s*<" + tag + r">([^<]*)</" + tag + ">"
+
+#     matches = re.findall(pattern, input_string)
+#     return matches
 
 
 def extract_reasoning_dict(reasoning_output, tags=("task", "plan", "subtask", "subtask_reason", "move", "move_reason")):
     if reasoning_output is None:
+        print("[NOTE] no reasoning detected")
         return dict()
 
     trajectory = dict()
 
     matches = find_task_occurrences(reasoning_output, tags)
+
+    print(f'[DEBUG] matches: {matches}')
 
     for match in matches:
         trajectory[int(match[0])] = dict(zip(tags, match[1:]))
@@ -236,7 +250,7 @@ def build_single_reasoning(episode_id, episode, lm, captions):
         "language_instruction": str(next(iter(episode["steps"]))["language_instruction"].numpy().decode()),
     }
 
-    print(captions)
+    # print(captions)
     print(episode)
     print(mt)
 
@@ -244,10 +258,22 @@ def build_single_reasoning(episode_id, episode, lm, captions):
 
     print(f'[NOTE] starting reasoning')
     reasoning = get_reasoning_dict(ft, mt, lm)
+    print(f'[DEBUG] reasoning: {reasoning}')
     print(f'[NOTE] finished reasoning')
     entry = {"reasoning": reasoning, "features": ft, "metadata": mt}
 
     return entry
+
+class NumpyEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.integer):
+            return int(obj)
+        elif isinstance(obj, np.floating):
+            return float(obj)
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
+        return super().default(obj)
+
 
 
 def generate_reasonings(builder, episode_ids, save_path="/data2/michael/libero_cot/reasonings.json"):
@@ -272,6 +298,8 @@ def generate_reasonings(builder, episode_ids, save_path="/data2/michael/libero_c
         # i=16
         entry = build_single_reasoning(episode_id, episode, lm, captions_dict)
 
+        print(f'[DEBUG] entry: {entry}')
+
         if entry["metadata"]["file_path"] in reasonings.keys():
             reasonings[entry["metadata"]["file_path"]][entry["metadata"]["episode_id"]] = entry
         else:
@@ -279,12 +307,12 @@ def generate_reasonings(builder, episode_ids, save_path="/data2/michael/libero_c
 
         print("computed reasoning:", entry)
 
-        with open(f'/data2/michael/libero_cot/reasonings_{i}.json', "w") as out_f:
-            json.dump(reasonings, out_f)
+        with open(f'/data2/michael/libero_cot/reasonings_{episode_id}.json', "w") as out_f:
+            json.dump(reasonings, out_f, cls=NumpyEncoder)
 
 
     with open(save_path, "w") as out_f:
-        json.dump(reasonings, out_f)
+        json.dump(reasonings, out_f, cls=NumpyEncoder)
 
 
 if __name__ == "__main__":
