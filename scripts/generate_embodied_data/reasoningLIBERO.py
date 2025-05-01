@@ -17,11 +17,11 @@ from tqdm import tqdm
 
 class Gemini:
     def __init__(self):
-        api_key = "add ur own"
+        api_key = "GEMINI API"
         genai.configure(api_key=api_key)
 
         # self.model = genai.GenerativeModel("gemini-1.5-flash")
-        self.model = genai.GenerativeModel("gemini-2.0-flash")
+        self.model = genai.GenerativeModel("gemini-2.0-flash-lite")
 
     def safe_call(self, f):
         while True:
@@ -193,10 +193,14 @@ def extract_reasoning_dict(reasoning_output, tags=("task", "plan", "subtask", "s
 
     matches = find_task_occurrences(reasoning_output, tags)
 
-    print(f'[DEBUG] matches: {matches}')
+    # print(f'[DEBUG] matches: {matches}')
 
     for match in matches:
         trajectory[int(match[0])] = dict(zip(tags, match[1:]))
+    
+    if len(matches) == 0:
+        print("[ERROR] no match for the below reasoning output:")
+        print(reasoning_output)
 
     return trajectory
 
@@ -206,13 +210,23 @@ def get_reasoning_dict(features, metadata, lm):
     caption = metadata["caption"] if "caption" in metadata.keys() else None
 
     prompt = build_prompt(features, language_instruction, caption=caption, list_only_moves=True)
-    print("metadata:", metadata, "\nprompt:", prompt)
+    # print("metadata:", metadata, "\nprompt:", prompt)
+
+    retry = False
 
     reasoning_output = lm.generate(prompt)
 
-    print("reasoning:", reasoning_output)
+    # print("reasoning:", reasoning_output)
 
-    return extract_reasoning_dict(reasoning_output)
+    reasoning_dict = extract_reasoning_dict(reasoning_output)
+
+    if reasoning_dict == {}:
+            reasoning_dict = extract_reasoning_dict(reasoning_output)
+            if reasoning_dict == {}:
+                print(f"[ERROR] empty reasoning dict")
+            
+
+    return reasoning_dict
 
 
 def build_single_reasoning(episode_id, episode, lm, captions):
@@ -245,14 +259,14 @@ def build_single_reasoning(episode_id, episode, lm, captions):
     }
 
     # print(captions)
-    print(episode)
+    # print(episode)
     print(mt)
 
     mt["caption"] = captions[mt["file_path"]][str(episode_id)]["caption"]
 
     print(f'[NOTE] starting reasoning')
     reasoning = get_reasoning_dict(ft, mt, lm)
-    print(f'[DEBUG] reasoning: {reasoning}')
+    # print(f'[DEBUG] reasoning: {reasoning}')
     print(f'[NOTE] finished reasoning')
     entry = {"reasoning": reasoning, "features": ft, "metadata": mt}
 
@@ -270,38 +284,43 @@ class NumpyEncoder(json.JSONEncoder):
 
 
 
-def generate_reasonings(builder, episode_ids, save_path="/mnt/data1/michael/libero_cot/reasonings.json"):
+def generate_reasonings(builder, save_path="/mnt/data2/michael/libero_cot/reasonings.json"):
+    START_POINT = [14, 60, 82, 111, 174, 181, 193, 210, 231, 258, 270, 273, 279, 321, 355, 369, 411, 427]
     print("[NOTE] starting reasoning generation")
     reasonings = dict()
     lm = Gemini()
 
-    if os.path.exists(save_path):
-        print(save_path, "existing, loading contents")
-        with open(save_path, "r") as f:
-            reasonings = json.load(f)
+    # if os.path.exists(save_path):
+    #     print(save_path, "existing, loading contents")
+    #     with open(save_path, "r") as f:
+    #         reasonings = json.load(f)
 
-        print("loaded reasonings:", sum([len(v) for v in reasonings.values()]), "entries")
+    #     print("loaded reasonings:", sum([len(v) for v in reasonings.values()]), "entries")
 
     with open("/home/michael/embodied-CoT2/scripts/generate_embodied_data/captions.json", "r") as captions_file:
         captions_dict = json.load(captions_file)
 
-    ds = builder.as_dataset(split=f"train[0%:25%]")
+    ds = builder.as_dataset(split=f"train")
 
     for episode_id, episode in enumerate(tqdm(ds)):
-        print(f'[GENERATING] episode {episode_id}')
+        
+        if episode_id not in START_POINT:
+            # print(f'not needed, skipping')
+            continue
         # i=16
+        print(f'[GENERATING] episode {episode_id}')
         entry = build_single_reasoning(episode_id, episode, lm, captions_dict)
 
-        print(f'[DEBUG] entry: {entry}')
+        # print(f'[DEBUG] entry: {entry}')
 
         if entry["metadata"]["file_path"] in reasonings.keys():
             reasonings[entry["metadata"]["file_path"]][entry["metadata"]["episode_id"]] = entry
         else:
             reasonings[entry["metadata"]["file_path"]] = {entry["metadata"]["episode_id"]: entry}
 
-        print("computed reasoning:", entry)
+        # print("computed reasoning:", entry)
 
-        with open(f'/mnt/data1/michael/libero_cot/reasonings_{episode_id}.json', "w") as out_f:
+        with open(f'/mnt/data2/michael/libero_cot/reasonings_fix_part4.json', "w") as out_f:
             json.dump(reasonings, out_f, cls=NumpyEncoder)
 
 
@@ -311,14 +330,14 @@ def generate_reasonings(builder, episode_ids, save_path="/mnt/data1/michael/libe
 
 if __name__ == "__main__":
     print('[NOTE] program starting')
-    builder = tfds.builder_from_directory(builder_dir='/mnt/data1/michael/modified_libero_rlds/libero_goal_no_noops/1.0.0')
+    builder = tfds.builder_from_directory(builder_dir='/mnt/data0/michael/modified_libero_rlds/libero_goal_no_noops/1.0.0')
     print('[NOTE] finished building')
-    episode_ids = range(107)  # All training episodes
+    # episode_ids = range(107)  # All training episodes
 
     # NOTE the generator expects the captions.json file to be present in the working directory
     # The captions should be generated using the script in
     # scripts/generate_embodied_data/bounding_boxes/generate_descriptions.py
-    generate_reasonings(builder, episode_ids)
+    generate_reasonings(builder)
 
 # if __name__ == "__main__":
 #     print('[NOTE] program starting')

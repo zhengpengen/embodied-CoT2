@@ -20,13 +20,13 @@ parser = argparse.ArgumentParser()
 
 parser.add_argument("--id", default=0, type=int)
 parser.add_argument("--gpu", type=int)
-parser.add_argument("--splits", default=4, type=int)
-parser.add_argument("--results-path", default="/data2/michael")
+parser.add_argument("--splits", default=1, type=int)
+parser.add_argument("--results-path", default="/mnt/data0/michael")
 
 args = parser.parse_args()
 
-device = f"cuda:0"
-hf_token = "TODO ADD UR  OWN"
+device = f"cuda:1"
+hf_token = "HF TOKEN"
 vlm_model_id = "prism-dinosiglip+7b"
 # vlm_model_id = "prism-dinosiglip+13b"
 
@@ -51,7 +51,7 @@ end = (args.id + 1) * split_percents
 
 ds = tfds.load(
     "libero_goal_no_noops",
-    data_dir="/data2/michael/modified_libero_rlds",
+    data_dir="/mnt/data0/michael/modified_libero_rlds",
     split=f"train[{start}%:{end}%]",
 )
 

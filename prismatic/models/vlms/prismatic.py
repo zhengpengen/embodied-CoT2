@@ -607,7 +607,11 @@ class PrismaticVLM(VLM):
 
         # Invoke super().generate --> taps into `GenerationMixin` which (redirects) to `forward()`
         autocast_dtype = self.llm_backbone.half_precision_dtype
-        with torch.autocast("cuda", dtype=autocast_dtype, enabled=self.enable_mixed_precision_training):
+        preferred_dtype = self.llm_backbone.half_precision_dtype
+        if preferred_dtype is torch.bfloat16 and not torch.cuda.is_bf16_supported():
+            preferred_dtype = torch.float16
+
+        with torch.autocast("cuda", dtype=preferred_dtype, enabled=self.enable_mixed_precision_training):
             # fmt: off
             generated_ids = super().generate(
                 input_ids=input_ids,            # Shape: [1, seq]

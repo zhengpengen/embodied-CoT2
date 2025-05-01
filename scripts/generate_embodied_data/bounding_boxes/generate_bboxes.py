@@ -17,9 +17,9 @@ parser = argparse.ArgumentParser()
 
 parser.add_argument("--id", type=int)
 parser.add_argument("--gpu", type=int)
-parser.add_argument("--splits", default=24)
-parser.add_argument("--data-path", type=str)
-parser.add_argument("--result-path", default="./bboxes")
+parser.add_argument("--splits", default=1)
+parser.add_argument("--data-path", type=str, default='/mnt/data0/michael/modified_libero_rlds')
+parser.add_argument("--result-path", default="/home/michael/embodied-CoT2/scripts/generate_embodied_data/bbox")
 
 args = parser.parse_args()
 bbox_json_path = os.path.join(args.result_path, f"results_{args.id}_bboxes.json")
@@ -29,17 +29,19 @@ split_percents = 100 // args.splits
 start = args.id * split_percents
 end = (args.id + 1) * split_percents
 
-ds = tfds.load("bridge_orig", data_dir=args.data_path, split=f"train[{start}%:{end}%]")
+ds = tfds.load("libero_goal_no_noops", data_dir=args.data_path, split=f"train")
 print("Done.")
 
 print("Loading Prismatic descriptions...")
-results_json_path = "./descriptions/full_descriptions.json"
+# results_json_path = "./descriptions/full_descriptions.json"
+# results_json_path = '/home/michael/embodied-CoT2/scripts/generate_embodied_data/bounding_boxes/reasonings.json'
+results_json_path = "/home/michael/embodied-CoT2/scripts/generate_embodied_data/captions.json"
 with open(results_json_path, "r") as f:
     results_json = json.load(f)
 print("Done.")
 
 print(f"Loading gDINO to device {args.gpu}...")
-model_id = "IDEA-Research/grounding-dino-base"
+model_id = "IDEA-Research/grounding-dino-tiny"
 device = f"cuda:{args.gpu}"
 
 processor = AutoProcessor.from_pretrained(model_id, size={"shortest_edge": 256, "longest_edge": 256})
@@ -52,14 +54,22 @@ TEXT_THRESHOLD = 0.2
 bbox_results_json = {}
 for ep_idx, episode in enumerate(ds):
 
-    episode_id = episode["episode_metadata"]["episode_id"].numpy()
+    print(f'[NOTE] Episode {ep_idx}: {episode}')
+    # episode_id = episode["episode_metadata"]["episode_id"].numpy()
+    episode_id = ep_idx
     file_path = episode["episode_metadata"]["file_path"].numpy().decode()
     print(f"ID {args.id} starting ep: {episode_id}, {file_path}")
+
+    # if file_path != "/iris/u/moojink/prismatic-dev/LIBERO/libero/datasets/regenerated--no_noops/libero_goal/put_the_bowl_on_the_plate_demo.hdf":
+    #     print("AHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH")
+    #     print(file_path)
+    #     break
 
     if file_path not in bbox_results_json.keys():
         bbox_results_json[file_path] = {}
 
     episode_json = results_json[file_path][str(episode_id)]
+    print(f'[NOTE] episode_json: {episode_json}')
     description = episode_json["caption"]
 
     start = time.time()
@@ -67,7 +77,8 @@ for ep_idx, episode in enumerate(ds):
     for step_idx, step in enumerate(episode["steps"]):
         if step_idx == 0:
             lang_instruction = step["language_instruction"].numpy().decode()
-        image = Image.fromarray(step["observation"]["image_0"].numpy())
+        # image = Image.fromarray(step["observation"]["image_0"].numpy())
+        image = Image.fromarray(step["observation"]["image"].numpy())
         inputs = processor(
             images=image,
             text=post_process_caption(description, lang_instruction),
