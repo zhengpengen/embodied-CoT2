@@ -231,6 +231,10 @@ def get_dataset_statistics(
 
     overwatch.info("Computing dataset statistics. This may take a bit, but should only need to happen once.")
     actions, proprios, num_transitions, num_trajectories = [], [], 0, 0
+
+    print("[DEBUG] TFRecord files being used:", dataset)
+
+
     for traj in tqdm(dataset.iterator(), total=cardinality if cardinality != tf.data.UNKNOWN_CARDINALITY else None):
         actions.append(traj["action"])
         proprios.append(traj["proprio"])
@@ -274,17 +278,20 @@ def get_dataset_statistics(
 def save_dataset_statistics(dataset_statistics, run_dir):
     """Saves a `dataset_statistics.json` file."""
     out_path = run_dir / "dataset_statistics.json"
+
+    stats = dataset_statistics
+    
     with open(out_path, "w") as f_json:
-        for _, stats in dataset_statistics.items():
-            for k in stats["action"].keys():
-                stats["action"][k] = stats["action"][k].tolist()
-            if "proprio" in stats:
-                for k in stats["proprio"].keys():
-                    stats["proprio"][k] = stats["proprio"][k].tolist()
-            if "num_trajectories" in stats:
-                stats["num_trajectories"] = stats["num_trajectories"].item()
-            if "num_transitions" in stats:
-                stats["num_transitions"] = stats["num_transitions"].item()
+        # for temp, stats in dataset_statistics.items():
+        for k in stats["action"].keys():
+            stats["action"][k] = stats["action"][k].tolist()
+        if "proprio" in stats:
+            for k in stats["proprio"].keys():
+                stats["proprio"][k] = stats["proprio"][k].tolist()
+        if "num_trajectories" in stats:
+            stats["num_trajectories"] = stats["num_trajectories"].item()
+        if "num_transitions" in stats:
+            stats["num_transitions"] = stats["num_transitions"].item()
         json.dump(dataset_statistics, f_json, indent=2)
     overwatch.info(f"Saved dataset statistics file at path {out_path}")
 

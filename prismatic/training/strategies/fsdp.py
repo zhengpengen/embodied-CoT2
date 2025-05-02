@@ -58,6 +58,7 @@ class FSDPStrategy(TrainingStrategy):
         mixed_precision_dtype: torch.dtype = torch.bfloat16,
         worker_init_fn: Optional[Callable[[int], None]] = None,
         sharding_strategy: str = "shard-grad-op",
+        # sharding_strategy: str = "full-shard",
         state_dict_type: StateDictType = StateDictType.FULL_STATE_DICT,
     ) -> None:
         super().__init__(
@@ -84,7 +85,8 @@ class FSDPStrategy(TrainingStrategy):
         if sharding_strategy == "shard-grad-op":
             self.fsdp_sharding_strategy = ShardingStrategy._HYBRID_SHARD_ZERO2
         elif sharding_strategy == "full-shard":
-            self.fsdp_sharding_strategy = ShardingStrategy.HYBRID_SHARD
+            # self.fsdp_sharding_strategy = ShardingStrategy.HYBRID_SHARD
+            self.fsdp_sharding_strategy = ShardingStrategy.FULL_SHARD 
         else:
             raise ValueError(f"FSDP Sharding Strategy {sharding_strategy} is not supported!")
 

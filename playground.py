@@ -135,7 +135,7 @@ SYSTEM_PROMPT = (
 def get_openvla_prompt(instruction: str) -> str:
     return f"{SYSTEM_PROMPT} USER: What action should the robot take to {instruction.lower()}? ASSISTANT: TASK:"
 
-INSTRUCTION = "place the watermelon on the towel"
+INSTRUCTION = "put the wine bottle on the stove"
 prompt = get_openvla_prompt(INSTRUCTION)
 
 def get_libero_env(task_bddl_file, resolution=256):
@@ -169,13 +169,13 @@ print(image)
 image.save('output.jpg')
 print(prompt.replace(". ", ".\n"))
 
-for i in range(100):
-    obs,_,_,_ = env.step([1,1,1,0,0,0,0])
-    if i % 10 == 0:
-        image = Image.fromarray(obs['agentview_image'][::-1,::-1])
-        # print(type(image))
-        # print(image)
-        image.save(f'output{i}.jpg')
+# for i in range(100):
+#     obs,_,_,_ = env.step([1,1,1,0,0,0,0])
+#     if i % 10 == 0:
+#         image = Image.fromarray(obs['agentview_image'][::-1,::-1])
+#         # print(type(image))
+#         # print(image)
+#         image.save(f'output{i}.jpg')
 
 # === BFLOAT16 MODE ===
 inputs = processor(prompt, image).to(device, dtype=torch.bfloat16)
@@ -212,17 +212,40 @@ for t in text:
 
     caption += caption_new.lstrip() + "\n\n"
 
-base = Image.fromarray(np.ones((256, 256, 3), dtype=np.uint8) * 255)
+base = Image.fromarray(np.ones((512, 512, 3), dtype=np.uint8) * 255)
 draw = ImageDraw.Draw(base)
 font = ImageFont.load_default(size=14) # big text
 color = (0,0,0) # RGB
 draw.text((30, 30), caption, color, font=font)
+
 
 img_arr = np.array(image)
 draw_gripper(img_arr, metadata["gripper"])
 draw_bboxes(img_arr, bboxes)
 
 text_arr = np.array(base)
+
+from PIL import ImageOps
+
+# Convert to PIL image
+img = Image.fromarray(img_arr)
+
+# Get current size
+width, height = img.size
+
+# Compute padding needed
+pad_width = 512 - width
+pad_height = 512 - height
+
+# Only pad if necessary
+if pad_width > 0 or pad_height > 0:
+    padding = (0, 0, pad_width, pad_height)  # (left, top, right, bottom)
+    img = ImageOps.expand(img, padding, fill=(255, 255, 255))  # white padding
+
+# Convert back to NumPy array
+img_arr = np.array(img)
+
+
 
 reasoning_img = Image.fromarray(np.concatenate([img_arr, text_arr], axis=1))   
 reasoning_img.save("reasoning.jpg")

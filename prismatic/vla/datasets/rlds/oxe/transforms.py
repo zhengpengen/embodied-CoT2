@@ -823,9 +823,13 @@ def tdroid_dataset_transform(trajectory: Dict[str, Any]) -> Dict[str, Any]:
     trajectory["observation"]["gripper_state"] = trajectory["observation"]["gripper_position"][:, -1:]
     return trajectory
 
+def libero_custom_dataset_transform(trajectory: Dict[str, Any]) -> Dict[str, Any]:
+    return trajectory  # pass through
+
 
 # === Registry ===
 OXE_STANDARDIZATION_TRANSFORMS = {
+    "libero_goal_no_noops": libero_custom_dataset_transform,
     "bridge_oxe": bridge_oxe_dataset_transform,
     "bridge_orig": bridge_orig_dataset_transform,
     "bridge_dataset": bridge_orig_dataset_transform,

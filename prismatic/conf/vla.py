@@ -197,6 +197,20 @@ class Exp_SigLIP_224px_Droid_Wipe(Exp_SigLIP_224px_Bridge):
 
     data_mix: str = "droid_wipe"
 
+# custom class for libero
+@dataclass
+class Exp_Custom_SigLIP_LiberoGoal(Exp_SigLIP_224px_Bridge):
+    vla_id: str = "siglip-224px+mx-libero_goal_no_noops"
+    base_vlm: Union[str, Path] = "siglip-224px+7b"
+
+    data_mix: str = "libero_goal_no_noops"
+    shuffle_buffer_size: int = 256_000  # Or another value suitable for Libero
+
+    # expected_world_size: int = 2  # 👈 MATCH your available GPUs
+    global_batch_size: int = 64   # Optional: scale down
+    per_device_batch_size: int = 8
+
+
 
 # === Define a VLA Registry Enum for Reference & Validation ===
 @unique
@@ -224,6 +238,10 @@ class VLARegistry(Enum):
 
     # === DROID Fine-tuning Configs ===
     SIGLIP_224PX_MX_DROID_WIPE = Exp_SigLIP_224px_Droid_Wipe
+
+    # custom libero
+    SIGLIP_224PX_MX_LIBERO_GOAL_NO_NOOPS = Exp_Custom_SigLIP_LiberoGoal
+
 
     @property
     def vla_id(self) -> str:

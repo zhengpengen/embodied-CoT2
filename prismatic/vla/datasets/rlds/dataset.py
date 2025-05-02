@@ -57,7 +57,7 @@ def make_dataset_from_rlds(
     action_normalization_mask: Optional[List[bool]] = None,
     num_parallel_reads: int = tf.data.AUTOTUNE,
     num_parallel_calls: int = tf.data.AUTOTUNE,
-    reasoning_dataset_path: str = "~/.cache/reasonings_dataset.json",
+    reasoning_dataset_path: str = "/home/michael/embodied-CoT2/scripts/generate_embodied_data/libero_ecot.json",
 ) -> Tuple[dl.DLataset, dict]:
     """
     This function is responsible for loading a specific RLDS dataset from storage and getting it into a standardized
@@ -210,6 +210,9 @@ def make_dataset_from_rlds(
 
     reasoning_dataset = make_tf_dict(reasoning_dataset)
 
+    import itertools
+    counter = itertools.count()
+
     def restructure(traj):
         # apply a standardization function, if provided
         if standardize_fn is not None:
@@ -261,8 +264,10 @@ def make_dataset_from_rlds(
                 )
             task["language_instruction"] = traj.pop(language_key)
 
+        # print(f'[DEBUG] traj: {traj}')
         file_name = traj["traj_metadata"]["episode_metadata"]["file_path"][0]
-        episode_id = traj["traj_metadata"]["episode_metadata"]["episode_id"][0]
+        # episode_id = traj["traj_metadata"]["episode_metadata"]["episode_id"][0]
+        episode_id = next(counter)
 
         file_names = tf.repeat(file_name, traj_len)
         episode_ids = tf.as_string(tf.repeat(episode_id, traj_len))
@@ -297,9 +302,10 @@ def make_dataset_from_rlds(
         with tf.io.gfile.GFile(dataset_statistics, "r") as f:
             dataset_statistics = json.load(f)
     elif dataset_statistics is None:
+        counter = itertools.count()
         full_dataset = dl.DLataset.from_rlds(
-            builder, split="all", shuffle=False, num_parallel_reads=num_parallel_reads
-        ).traj_map(restructure, num_parallel_calls)
+            builder, split="train", shuffle=False, num_parallel_reads=1
+        ).traj_map(restructure, num_parallel_calls=1)
         # tries to load from cache, otherwise computes on the fly
         dataset_statistics = get_dataset_statistics(
             full_dataset,
@@ -329,7 +335,8 @@ def make_dataset_from_rlds(
 
     dataset = dl.DLataset.from_rlds(builder, split=split, shuffle=shuffle, num_parallel_reads=num_parallel_reads)
 
-    dataset = dataset.traj_map(restructure, num_parallel_calls)
+    counter = itertools.count()
+    dataset = dataset.traj_map(restructure, num_parallel_calls=1)
     dataset = dataset.traj_map(
         partial(
             normalize_action_and_proprio,

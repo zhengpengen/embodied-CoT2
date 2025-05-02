@@ -49,13 +49,14 @@ class TrainConfig:
 
     # VLAConfig (`prismatic/conf/vla.py`); override with --vla.type `VLARegistry.<VLA>.vla_id`
     vla: VLAConfig = field(
-        default_factory=VLAConfig.get_choice_class(VLARegistry.DINOSIGLIP_224PX_MX_OXE_MAGIC_SOUP_PLUS.vla_id)
+        default_factory=VLAConfig.get_choice_class(VLARegistry.SIGLIP_224PX_MX_LIBERO_GOAL_NO_NOOPS.vla_id)
     )
 
     # Directory Paths
-    data_root_dir: Path = Path(                                     # Path to Open-X dataset directory
-        "datasets/open-x-embodiment"
-    )
+    # data_root_dir: Path = Path(                                     # Path to Open-X dataset directory
+    #     "datasets/open-x-embodiment"
+    # )
+    data_root_dir: Path = Path("/mnt/data1/michael/modified_libero_rlds")
     run_root_dir: Path = Path("runs")                               # Path to directory to store logs & checkpoints
 
     # Resume Run Parameters
@@ -69,7 +70,7 @@ class TrainConfig:
     run_id: Optional[str] = None                                    # Run ID for logging, Weights & Biases
     run_id_note: Optional[str] = None                               # Extra note for logging, Weights & Biases
     save_interval: int = 2500                                       # Interval for saving checkpoints (in steps)
-    image_aug: bool = False                                         # Whether to enable image augmentations
+    image_aug: bool = True                                         # Whether to enable image augmentations
     seed: int = 7                                                   # Random seed (for reproducibility)
 
     # HF Hub Credentials (for any gated models)
@@ -77,8 +78,8 @@ class TrainConfig:
 
     # Tracking Parameters
     trackers: Tuple[str, ...] = ("jsonl", "wandb")                  # Trackers to initialize (if W&B, add config!)
-    wandb_project: str = "openvla"                                  # Name of W&B project to log to (use default!)
-    wandb_entity: str = "stanford-voltron"                          # Name of entity to log under
+    wandb_project: str = "ECOT2"                                  # Name of W&B project to log to (use default!)
+    wandb_entity: str = "zhengpengen"                          # Name of entity to log under
 
     def __post_init__(self) -> None:
         """Lift optimization parameters from `self.vla` for ease of use =>> validate on `expected_world_size`"""
@@ -125,7 +126,8 @@ def train(cfg: TrainConfig) -> None:
 
     # Start =>> Build Directories and Set Randomness
     overwatch.info('"Do or do not; there is no try."', ctx_level=1)
-    hf_token = cfg.hf_token.read_text().strip() if isinstance(cfg.hf_token, Path) else os.environ[cfg.hf_token]
+    # hf_token = cfg.hf_token.read_text().strip() if isinstance(cfg.hf_token, Path) else os.environ[cfg.hf_token]
+    hf_token = 'HF TOKEN'
     worker_init_fn = set_global_seed(cfg.seed, get_worker_init_fn=True)
     os.makedirs(run_dir := (cfg.run_root_dir / cfg.run_id), exist_ok=True)
     os.makedirs(cfg.run_root_dir / cfg.run_id / "checkpoints", exist_ok=True)
@@ -198,6 +200,9 @@ def train(cfg: TrainConfig) -> None:
         shuffle_buffer_size=cfg.vla.shuffle_buffer_size,
         image_aug=cfg.image_aug,
     )
+
+    # print("[DEBUG]  Dataset statistics:", vla_dataset.dataset_statistics)
+
 
     # Save dataset statistics for de-normalization at inference time
     if overwatch.is_rank_zero():

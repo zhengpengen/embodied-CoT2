@@ -99,6 +99,21 @@ class PaddedCollatorForActionPrediction:
     pixel_values_dtype: torch.dtype = torch.float32
 
     def __call__(self, instances: Sequence[Dict[str, torch.Tensor]]) -> Dict[str, torch.Tensor]:
+        print("[DEBUG] type(instances) =", type(instances))
+        print("[DEBUG] len(instances) =", len(instances))
+        print("[DEBUG] type(instances[0]) =", type(instances[0]))
+        
+        print("[DEBUG] len(instances[0]) =", len(instances[0]))
+        print("[DEBUG] type(instances[0][0]) =", type(instances[0][0]))
+        
+
+        print("[DEBUG] First instance keys:", instances[0].keys())
+        for k, v in instances[0].items():
+            if isinstance(v, torch.Tensor):
+                print(f"[DEBUG] {k}: tensor, shape={v.shape}, dtype={v.dtype}")
+            else:
+                print(f"[DEBUG] {k}: type={type(v)}, value={v if isinstance(v, (int, str, float)) else '<non-scalar>'}")
+
         input_ids, labels = tuple([instance[key] for instance in instances] for key in ("input_ids", "labels"))
         pixel_values = [instance["pixel_values"] for instance in instances]
         if "dataset_name" in instances[0]:
